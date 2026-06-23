@@ -1,0 +1,4 @@
+results/*
+!results/gold/
+__pycache__/
+.pytest_cache/
