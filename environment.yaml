@@ -1,0 +1,12 @@
+name: hiv-agent
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+
+dependencies:
+  - python =3.10
+  - pip
+  - biopython
+  - pip:
+    - sierrapy
