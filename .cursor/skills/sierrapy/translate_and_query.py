@@ -20,7 +20,7 @@ from sierrapy.fragments import HIV1_SEQUENCE_ANALYSIS_DEFAULT
 from sierrapy.sierraclient import ResponseError, SierraClient
 
 SKILL_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SKILL_DIR.parent.parent
+PROJECT_ROOT = SKILL_DIR.parent.parent.parent
 
 FASTA_GLOBS = ("*.fasta", "*.fa", "*.fas", "*.fna")
 
