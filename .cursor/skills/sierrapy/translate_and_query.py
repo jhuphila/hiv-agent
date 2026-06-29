@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-translate_and_query.py — Validate HIV pol FASTA input, query Stanford HIVDB via
+translate_and_query.py — Load HIV pol FASTA input, query Stanford HIVDB via
 sierrapy, and write raw JSON plus a summary CSV to results/.
 """
 
@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from Bio import SeqIO
-from Bio.Seq import Seq
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 from sierrapy.fragments import HIV1_SEQUENCE_ANALYSIS_DEFAULT
 from sierrapy.sierraclient import ResponseError, SierraClient
@@ -24,7 +23,6 @@ SKILL_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SKILL_DIR.parent.parent
 
 FASTA_GLOBS = ("*.fasta", "*.fa", "*.fas", "*.fna")
-STOP_CODONS = {"TAA", "TAG", "TGA"}
 
 DEFAULT_MAX_RETRIES = 5
 DEFAULT_INITIAL_BACKOFF_S = 5.0
@@ -49,37 +47,6 @@ def load_sequences(fasta_path: Path) -> list[dict[str, str]]:
     if not records:
         raise ValueError(f"No sequences found in {fasta_path}")
     return records
-
-
-def validate_coding_sequences(records: list[dict[str, str]]) -> None:
-    for record in records:
-        header = record["header"]
-        sequence = record["sequence"]
-        length = len(sequence)
-
-        if length % 3 != 0:
-            raise ValueError(
-                f"Sequence '{header}' length {length} is not a multiple of 3"
-            )
-
-        protein = str(Seq(sequence).translate(table=1, to_stop=False))
-        stop_index = protein.find("*")
-        if stop_index != -1 and stop_index < len(protein) - 1:
-            codon_start = stop_index * 3
-            stop_codon = sequence[codon_start : codon_start + 3]
-            raise ValueError(
-                f"Sequence '{header}' has premature stop codon "
-                f"{stop_codon} at amino-acid position {stop_index + 1}"
-            )
-
-        for frame_start in range(0, length - 2, 3):
-            codon = sequence[frame_start : frame_start + 3]
-            aa_index = frame_start // 3
-            if codon in STOP_CODONS and aa_index < (length // 3) - 1:
-                raise ValueError(
-                    f"Sequence '{header}' has premature stop codon "
-                    f"{codon} at amino-acid position {aa_index + 1}"
-                )
 
 
 def is_retryable_error(exc: BaseException) -> bool:
@@ -121,9 +88,38 @@ def query_sierra(
     raise RuntimeError("Sierra query failed") from last_error
 
 
+def print_validation_results(analyses: list[dict[str, Any]]) -> None:
+    for analysis in analyses:
+        seq_id = analysis.get("inputSequence", {}).get("header", "")
+        for validation in analysis.get("validationResults", []):
+            level = validation.get("level", "NOTICE")
+            message = validation.get("message", "")
+            print(
+                f"  Sierra {level}: [{seq_id}] {message}",
+                file=sys.stderr,
+            )
+
+
 def iter_summary_rows(analysis: dict[str, Any]) -> Iterator[dict[str, Any]]:
     seq_id = analysis.get("inputSequence", {}).get("header", "")
     subtype = analysis.get("subtypeText", "")
+
+    for validation in analysis.get("validationResults", []):
+        yield {
+            "sequence_id": seq_id,
+            "subtype": subtype,
+            "record_type": "validation",
+            "gene": "",
+            "first_aa": "",
+            "last_aa": "",
+            "gene_length": "",
+            "position": "",
+            "mutation": validation.get("message", ""),
+            "drug_class": "",
+            "drug": "",
+            "score": "",
+            "level": validation.get("level", ""),
+        }
 
     for aligned in analysis.get("alignedGeneSequences", []):
         gene = aligned.get("gene", {}).get("name", "")
@@ -223,6 +219,7 @@ def process_fasta(
         initial_backoff_s=initial_backoff_s,
         backoff_multiplier=backoff_multiplier,
     )
+    print_validation_results(analyses)
 
     stem = fasta_path.stem
     json_path = results_dir / f"{stem}_sierra.json"
@@ -238,7 +235,7 @@ def process_fasta(
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Validate HIV FASTA sequences, query Stanford HIVDB via sierrapy, "
+            "Load HIV FASTA sequences, query Stanford HIVDB via sierrapy, "
             "and write JSON plus summary CSV to results/."
         )
     )
@@ -319,7 +316,6 @@ def main() -> int:
 
         records = load_sequences(fasta_path)
         print(f"Processing {fasta_path} ({len(records)} sequence(s))...")
-        validate_coding_sequences(records)
         json_path, csv_path = process_fasta(
             records,
             fasta_path,

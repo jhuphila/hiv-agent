@@ -25,8 +25,9 @@ usage: translate_and_query.py [-h] [--input INPUT] [--data-dir DATA_DIR]
                               [--initial-backoff INITIAL_BACKOFF]
                               [--backoff-multiplier BACKOFF_MULTIPLIER]
 
-Validate HIV FASTA sequences, query Stanford HIVDB via sierrapy, and write
-JSON plus summary CSV to results/.
+Load HIV FASTA sequences, query Stanford HIVDB via sierrapy, and write JSON
+plus summary CSV to results/. Sierra validationResults are surfaced in stderr
+and as `validation` rows in the summary CSV.
 
 options:
   -h, --help            show this help message and exit

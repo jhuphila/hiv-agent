@@ -20,14 +20,19 @@ translation.
 Always route mutation and resistance work through this skill:
 
 1. Place input FASTA in `data/` (project root).
-2. Run `translate_and_query.py` to validate sequences, query Sierra, and write
-   `results/*_sierra.json` plus `results/*_summary.csv`.
-3. Read genes, mutations, and drug scores from those outputs — never reconstruct
-   them by hand.
+2. Run `translate_and_query.py` to query Sierra and write `results/*_sierra.json`
+   plus `results/*_summary.csv`.
+3. Read genes, mutations, drug scores, and Sierra validation messages from those
+   outputs — never reconstruct them by hand.
 
-Acceptable uses outside this tool: coarse QC (length, stop codons) and file
-handling. Any statement about **which mutations are present**, **HIVDB positions**,
-or **resistance levels** must come from Sierra results.
+Sequences are sent to Sierra as-is; do not block on local CDS checks (length,
+stop codons, frameshifts). Treat Sierra `validationResults` as the source of
+truth for sequence issues. Surface those messages to the user while still
+returning alignment and resistance results when Sierra provides them.
+
+Acceptable uses outside this tool: file handling only. Any statement about
+**which mutations are present**, **HIVDB positions**, **resistance levels**, or
+**sequence quality issues** must come from Sierra results.
 
 ## Environment
 
@@ -67,10 +72,6 @@ In examples below, `$SIERRAPY` is a readable placeholder for that resolved path.
 - `--initial-backoff SEC` — first retry delay (default: 5)
 - `--backoff-multiplier M` — exponential backoff factor (default: 2)
 
-**Fail-fast validation** (before any network call): raises `ValueError` if any
-sequence length is not a multiple of 3 or an internal stop codon (`TAA`/`TAG`/`TGA`)
-is present.
-
 ## Common patterns
 
 **Query every FASTA in `data/`:**
@@ -104,9 +105,13 @@ $SIERRAPY --input data/my_sequences.fasta --max-retries 8 --initial-backoff 10
 | `results/<name>_sierra.json` | Raw Sierra `sequenceAnalysis` JSON |
 | `results/<name>_summary.csv` | Flattened genes, mutations, drug scores |
 
-Summary CSV `record_type` values: `gene`, `mutation`, `drug_score`.
+Summary CSV `record_type` values: `validation`, `gene`, `mutation`, `drug_score`.
+`validation` rows carry Sierra `validationResults` (`level`, `mutation` = message).
 
-**Low-level Sierra CLI** (raw JSON only, no validation or summary CSV): use
+Sierra warnings (e.g. frameshifts) are printed to stderr and included in the
+summary CSV; results are still written when Sierra returns them.
+
+**Low-level Sierra CLI** (raw JSON only, no summary CSV): use
 `sierrapy fasta` from the conda env in `environment.yaml`. Prefer `$SIERRAPY` for
 project workflows.
 

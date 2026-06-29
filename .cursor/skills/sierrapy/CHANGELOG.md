@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- Removed local fail-fast CDS validation (length, stop codons); sequences are
+  always sent to Sierra unless the FASTA or request is invalid
+- Added: surface Sierra `validationResults` on stderr and as `validation` rows
+  in the summary CSV while still writing full results
+
 ## [2026-06-17] — Initial skill
 - Tool version: SierraPy 0.4.3 (check with `sierrapy --version`)
 - Skill version: 1.0.0
