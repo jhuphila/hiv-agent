@@ -1,17 +1,26 @@
-.PHONY: install gold model-all evaluate clean test
+.PHONY: install gold pipeline-gold evaluate clean test help
 
 help:
-	@echo "install  - create/update the hiv-agent conda env"
-	@echo "gold     - run sierrapy directly (no agent) to build a standard answer key for evaluation"
-	@echo "test     - run pytest in the hiv-agent env -- not yet implemented"
-	@echo "clean    - remove caches"
+	@echo "install       - create/update the hiv-agent conda env"
+	@echo "gold          - run sierrapy fasta directly to build the Sierra ground-truth answer key"
+	@echo "pipeline-gold - run translate_and_query.py to build a pipeline regression reference"
+	@echo "test          - run pytest in the hiv-agent env -- not yet implemented"
+	@echo "clean         - remove caches"
 
 install:
 	conda env create -f environment.yaml || conda env update -f environment.yaml
 
-gold:               # deterministic Sierra reference, no agent, the gold standard
+gold:               # Sierra-direct ground truth - one output JSON per FASTA in data/
+	mkdir -p results/gold
+	@for f in data/*.fasta; do \
+		base=$$(basename $$f .fasta); \
+		echo "Running Sierra on $$f -> results/gold/$$base.json"; \
+		conda run -n hiv-agent sierrapy fasta $$f -o results/gold/$$base.json; \
+	done
+
+pipeline-gold:      # Wrapper script reference - regression check only, not primary eval ground truth
 	conda run -n hiv-agent python .cursor/skills/sierrapy/translate_and_query.py \
-		--data-dir data --results-dir results/gold
+		--data-dir data --results-dir results/pipeline-gold
 
 test:
 	conda run -n hiv-agent pytest
