@@ -1,3 +1,3 @@
 [submodule "skills/damlab-skills"]
-	path = skills/damlab-skills
+	path = .cursor/skills/damlab-skills
 	url = https://github.com/DamLabResources/damlab-skills
