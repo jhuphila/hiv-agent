@@ -1,18 +1,18 @@
 # HIV Agent
 
-A [Cursor Agent](https://docs.cursor.com/agent/overview) project for HIV-1 *pol* sequence analysis. The workflow validates coding sequences, queries [Stanford HIVDB Sierra](https://hivdb.stanford.edu/) for alignment and mutation calling, and writes structured resistance summaries — without hand-translating DNA or inferring HIVDB positions manually.
+A [Cursor Agent](https://docs.cursor.com/agent/overview) project for HIV-1 *pol* sequence analysis. The workflow loads FASTA input, queries [Stanford HIVDB Sierra](https://hivdb.stanford.edu/) for alignment and mutation calling, and writes structured resistance summaries — without hand-translating DNA or inferring HIVDB positions manually.
 
 The project pairs a focused **sierrapy** agent skill (HIV-specific) with the shared **[damlab-skills](https://github.com/DamLabResources/damlab-skills)** library (general bioinformatics CLI tools) so agents can run reproducible analyses from FASTA input through tabular results.
 
 ## What it does
 
-1. **Validate** HIV coding sequences (length divisible by 3, no premature stop codons).
-2. **Query** Stanford HIVDB via [sierrapy](https://github.com/hivdb/sierrapy) for *pol* gene alignment, subtype assignment, mutation calling, and antiretroviral resistance interpretation.
+1. **Load** HIV FASTA sequences from `data/`.
+2. **Query** Stanford HIVDB via [sierrapy](https://github.com/hivdb/sierrapy) for *pol* gene alignment, subtype assignment, mutation calling, and antiretroviral resistance interpretation. Sequences are sent to Sierra as-is; the pipeline does not block on local CDS checks.
 3. **Write** machine-readable outputs under `results/`:
-   - `*_sierra.json` — raw Sierra `sequenceAnalysis` JSON
-   - `*_summary.csv` — flattened genes, mutations, and drug susceptibility scores
+   - `*_sierra.json` — raw Sierra `sequenceAnalysis` JSON (including `validationResults`)
+   - `*_summary.csv` — flattened genes, mutations, drug susceptibility scores, and Sierra validation messages
 
-Mutation positions, HIVDB numbering, and resistance levels always come from Sierra — not from generic translation.
+Mutation positions, HIVDB numbering, resistance levels, and sequence-quality warnings always come from Sierra — not from generic translation or local pre-checks.
 
 ## Project layout
 
@@ -23,18 +23,16 @@ hiv-agent/
 ├── environment.yaml               # Conda env: hiv-agent (python, biopython, sierrapy)
 ├── Makefile                       # install, test, clean targets
 ├── skills/
-│   ├── sierrapy/                  # HIV-specific skill + translate_and_query.py
 │   └── damlab-skills/             # Git submodule — general bioinformatics skills
 └── .cursor/
-    └── skills/sierrapy/           # Project-local Cursor skill (same sierrapy content)
+    └── skills/sierrapy/           # HIV-specific skill + translate_and_query.py
 ```
 
 | Path | Purpose |
 |------|---------|
 | `data/` | Place HIV *pol* (or other coding) FASTA files here before running the pipeline. |
 | `results/` | JSON and summary CSV written per input file stem (e.g. `my_sequences_sierra.json`). |
-| `skills/sierrapy/` | Canonical location for `translate_and_query.py` when running from the shell. |
-| `.cursor/skills/sierrapy/` | Cursor-discovered project skill; agents read `SKILL.md` from here. |
+| `.cursor/skills/sierrapy/` | Sierra pipeline script, Cursor skill docs, and `translate_and_query.py`. |
 | `skills/damlab-skills/` | Submodule with samtools, seqkit, csvtk, plotting, EDA, and other lab skills. |
 
 ## Prerequisites
@@ -89,31 +87,27 @@ See [skills/damlab-skills/INSTALL.md](skills/damlab-skills/INSTALL.md) for Curso
 Place one or more FASTA files in `data/`. Example files are included:
 
 - `data/my_sequences.fasta` — HXB2 reference (*pol*)
-- `data/other_sequences.fasta` — additional clinical-style sequences
+- `data/test_sequences.fasta` — additional clinical-style sequences
 
-Sequences must be **nucleotide coding sequences** (length a multiple of 3, no internal stop codons).
+Sequences should ordinarily be HIV *pol* nucleotide coding sequences, but the pipeline does not enforce length, reading frame, or stop-codon rules locally. Sierra evaluates input and reports issues in `validationResults`.
 
 ### 2. Run the Sierra pipeline
 
 Process every FASTA in `data/`:
 
 ```bash
-conda run -n hiv-agent python skills/sierrapy/translate_and_query.py
+conda run -n hiv-agent python .cursor/skills/sierrapy/translate_and_query.py \
+  --data-dir data --results-dir results
 ```
 
 Process a single file:
 
 ```bash
-conda run -n hiv-agent python skills/sierrapy/translate_and_query.py \
-  --input data/my_sequences.fasta
-```
-
-Use `skills/sierrapy/translate_and_query.py` from the shell so default `--data-dir` and `--results-dir` resolve to the project root. If you invoke the copy under `.cursor/skills/sierrapy/`, pass explicit directories:
-
-```bash
 conda run -n hiv-agent python .cursor/skills/sierrapy/translate_and_query.py \
-  --data-dir data --results-dir results
+  --input data/my_sequences.fasta --results-dir results
 ```
+
+Default `--data-dir` and `--results-dir` resolve relative to the project root when omitted. Pass explicit paths if you run the script from another working directory.
 
 ### 3. Inspect results
 
@@ -122,9 +116,11 @@ For input `data/my_sequences.fasta`, the pipeline writes:
 | File | Contents |
 |------|----------|
 | `results/my_sequences_sierra.json` | Full Sierra analysis per sequence |
-| `results/my_sequences_summary.csv` | Flattened table with `record_type` = `gene`, `mutation`, or `drug_score` |
+| `results/my_sequences_summary.csv` | Flattened table with `record_type` = `validation`, `gene`, `mutation`, or `drug_score` |
 
-Summary CSV columns include `sequence_id`, `subtype`, `gene`, `position`, `mutation`, `drug_class`, `drug`, `score`, and `level` (susceptibility tier).
+Sierra validation messages (e.g. frameshifts) are printed to stderr during the run and included as `validation` rows in the CSV. Alignment and resistance results are still written when Sierra returns them.
+
+Summary CSV columns include `sequence_id`, `subtype`, `gene`, `position`, `mutation`, `drug_class`, `drug`, `score`, and `level` (Sierra validation severity or susceptibility tier, depending on `record_type`).
 
 Example mutation rows:
 
@@ -153,9 +149,9 @@ translate_and_query.py [--input FILE] [--data-dir DIR] [--results-dir DIR]
 | `--initial-backoff` | 5 | First retry delay (seconds) |
 | `--backoff-multiplier` | 2 | Exponential backoff factor |
 
-Full flag reference: [skills/sierrapy/reference.md](skills/sierrapy/reference.md).
+Full flag reference: [.cursor/skills/sierrapy/reference.md](.cursor/skills/sierrapy/reference.md).
 
-Low-level alternative (raw JSON only, no validation or summary CSV):
+Low-level alternative (raw JSON only, no summary CSV):
 
 ```bash
 conda run -n hiv-agent sierrapy fasta data/my_sequences.fasta
@@ -168,13 +164,13 @@ Prefer `translate_and_query.py` for project workflows.
 This repo is set up as a **project-local agent workspace**:
 
 - **sierrapy** lives in `.cursor/skills/sierrapy/` so Cursor agents automatically discover HIV resistance workflows.
-- Agents are instructed to place FASTA in `data/`, run `translate_and_query.py`, and read mutations and drug scores only from `results/` — never to manually translate or number mutations.
+- Agents are instructed to place FASTA in `data/`, run `translate_and_query.py`, and read mutations, drug scores, and Sierra validation messages only from `results/` — never to manually translate or number mutations.
 - Skill documentation: [.cursor/skills/sierrapy/SKILL.md](.cursor/skills/sierrapy/SKILL.md)
 
 Add the pipeline script to your terminal allowlist (Cursor → Settings → Features → Terminal):
 
 ```bash
-readlink -f "$(pwd)/skills/sierrapy/translate_and_query.py"
+readlink -f "$(pwd)/.cursor/skills/sierrapy/translate_and_query.py"
 ```
 
 ### damlab-skills
@@ -195,10 +191,9 @@ make clean      # Remove __pycache__ directories
 
 - **Format:** FASTA (`.fasta`, `.fa`, `.fas`, `.fna`)
 - **Alphabet:** DNA (T/U accepted; U is normalized to T)
-- **Reading frame:** Coding sequence — length must be divisible by 3
-- **Stop codons:** No premature `TAA`, `TAG`, or `TGA` before the terminal codon
+- **Content:** Intended for HIV *pol* nucleotide sequences, but not pre-validated locally
 
-The pipeline fails fast on validation errors **before** any network call to Sierra.
+The pipeline only rejects invalid requests (missing files, empty FASTA, unreachable API after retries). Sequence-quality issues such as frameshifts, missing genes, or stop codons are reported by Sierra in `validationResults`, printed to stderr, and written to the summary CSV as `validation` rows.
 
 ## Output reference
 
@@ -206,13 +201,14 @@ The pipeline fails fast on validation errors **before** any network call to Sier
 
 | `record_type` | Meaning |
 |---------------|---------|
+| `validation` | Sierra `validationResults` message (`level` = severity, `mutation` = message text) |
 | `gene` | Aligned gene span (PR, RT, IN, etc.) with `first_aa`, `last_aa`, `gene_length` |
 | `mutation` | HIVDB mutation call at `position` in `gene` |
 | `drug_score` | Antiretroviral susceptibility for a `drug` in a `drug_class` |
 
 ### JSON
 
-`results/*_sierra.json` contains the full Sierra response per sequence, including `alignedGeneSequences`, `drugResistance`, subtype text, and related fields. Use the CSV for tabular analysis; use JSON when you need the complete API payload.
+`results/*_sierra.json` contains the full Sierra response per sequence, including `validationResults`, `alignedGeneSequences`, `drugResistance`, subtype text, and related fields. Use the CSV for tabular analysis; use JSON when you need the complete API payload.
 
 ## Development
 
@@ -228,7 +224,7 @@ dependencies:
     - pytest
 ```
 
-Changelog for the sierrapy skill: [skills/sierrapy/CHANGELOG.md](skills/sierrapy/CHANGELOG.md).
+Changelog for the sierrapy skill: [.cursor/skills/sierrapy/CHANGELOG.md](.cursor/skills/sierrapy/CHANGELOG.md).
 
 To run tests (when added):
 
