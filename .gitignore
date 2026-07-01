@@ -2,3 +2,6 @@ results/*
 !results/gold/
 __pycache__/
 .pytest_cache/
+data/* # May need to remove this
+eval/runs/ # May need to remove this
+eval/tasks/ # May need to remove this
