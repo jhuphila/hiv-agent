@@ -1,5 +1,5 @@
 results/*
-!results/gold/
+!results/gold/*
 __pycache__/
 .pytest_cache/
 data/* # May need to remove this
