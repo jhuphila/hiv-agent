@@ -1,7 +1,15 @@
+# Sierra pipeline outputs --> keep gold, ignore the rest
 results/*
+!results/gold/
 !results/gold/*
+
+# Python caches
 __pycache__/
 .pytest_cache/
-data/* # May need to remove this
-eval/runs/ # May need to remove this
-eval/tasks/ # May need to remove this
+
+# Input sequence data (may remove this upon confirmation data is public)
+data/*
+
+# Evaluation run artifacts and task specs (local-only for now)
+eval/runs/
+eval/tasks/
