@@ -19,8 +19,6 @@ from requests.exceptions import ConnectionError, HTTPError, Timeout
 from sierrapy.fragments import HIV1_SEQUENCE_ANALYSIS_DEFAULT
 from sierrapy.sierraclient import ResponseError, SierraClient
 
-SKILL_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SKILL_DIR.parent.parent.parent
 
 FASTA_GLOBS = ("*.fasta", "*.fa", "*.fas", "*.fna")
 
@@ -247,14 +245,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--data-dir",
         type=Path,
-        default=PROJECT_ROOT / "data",
-        help="Directory to scan for FASTA files when --input is not set (default: data/).",
+        default=Path.cwd() / "data",
+        help="Directory to scan for FASTA files when --input is not set (default: ./data).",
     )
     parser.add_argument(
         "--results-dir",
         type=Path,
-        default=PROJECT_ROOT / "results",
-        help="Directory for JSON and CSV output (default: results/).",
+        default=Path.cwd() / "results",
+        help="Directory for JSON and CSV output (default: ./results).",
     )
     parser.add_argument(
         "--url",
