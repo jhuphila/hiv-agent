@@ -1,6 +1,7 @@
 ---
 name: sierrapy
-description: Query Stanford HIVDB Sierra for HIV-1 pol alignment, mutation calling,
+description: >-
+  Query Stanford HIVDB Sierra for HIV-1 pol alignment, mutation calling,
   and antiretroviral resistance interpretation from FASTA input. Use when analyzing
   HIV sequences, drug-resistance mutations (DRMs), subtype assignment, PR/RT/IN/CA
   gene alignment, or Stanford HIVDB scores. Triggers on HIV resistance, sierrapy,
