@@ -76,6 +76,8 @@ Layer A anchors are tied to **measurable thresholds** (precision/recall, exact m
 >
 > The highest B4 score goes to an agent that **reasons from the data and names the boundary of its evidence** — not to one that crosses the boundary, nor to one that refuses to reason.
 
+> **Grade the agent's complete response, wherever it appears.** The output skeleton has a fixed shape and cannot hold everything a task prompt may ask for. When a prompt asks a question the skeleton has no section for (e.g. a clinical recommendation), agents commonly answer **in the chat**, captured only by the transcript. A faithful Section 6 does not exempt an agent from unsupported claims made elsewhere. B4, B5, B6, and B8 apply to everything the agent produced — skeleton and transcript alike. The one exception: **Layer A is always graded from the structured `*_sierra.json`, never from prose.**
+
 > **Note on retired criteria and the validity gate.** Two Layer B criteria have been retired because they measured the *harness*, not the model:
 >
 > - **Old B2 ("no stale-results shortcut")** — the isolated sandbox starts empty every run, so a stale read is structurally impossible. Every run passed for structural reasons. B2 is now **Constraint adherence** (a real behavioral criterion).
@@ -130,4 +132,3 @@ Tag the run's edge-case behavior as one of:
 - 0 is a real score (applied and failed); N/A is not a score (did not apply). Keep them distinct.
 - This rubric is the general template. The per-task spec (eval/tasks/.md) declares what each task asked for (which conditional criteria apply) and sharpens A1/A3 with the specific DRMs expected and B5 with what "complete" means for that task.
 - The LLM judge applying this rubric is an **assistant to human grading**, not a replacement — judge outputs should be spot-checked against human scores.
-

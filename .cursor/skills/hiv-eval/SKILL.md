@@ -42,21 +42,37 @@ procedure documented in `docs/eval-protocol.md`.
 - **Never re-derive** mutations, positions, resistance levels, or subtypes by hand.
   Read them only from the gold JSON and from the agent's exported output artifacts.
 
-## Run artifacts → criterion mapping
+## Run artifacts → where to look
 
 The run folder `eval/runs/<task_id>/<round>/<model>_run<n>/` contains:
 
-| Artifact | Grades |
-|----------|--------|
+| Artifact | Primary evidence for |
+|----------|----------------------|
 | `*_sierra.json` — agent's structured Sierra output | **Layer A** (A1–A5), vs. gold |
 | `*_summary.csv` — agent's per-sequence summary | Layer A support / cross-check |
 | `<label>_output.md` — the filled output skeleton (prose + tables) | **B2, B3, B4, B5, B6, B8** |
-| `<label>_transcript.md` — the exported chat transcript (narration only) | **B7, B8** |
+| `<label>_transcript.md` — the exported chat transcript | **B4, B7, B8** — and anything the agent produced outside the skeleton |
 | `run_meta.json` — `results_empty_at_start`, `sierra_json_mtime` | **Unscored** validity gate |
 
-**Grade each criterion from the artifact named above — do not deviate.** In particular,
-grade Layer A from the *structured* output, never from the prose; if prose and structured
-output disagree, that is a **B4** problem, not a Layer A adjustment.
+**The table says where evidence usually lives — it is not a restriction.** Grade the
+agent's **complete output**, considering every artifact together.
+
+**This matters especially for B4, B5, B6, and B8.** The output skeleton has a fixed shape
+(tables in Sections 2–5, a short summary in Section 6, provenance in Section 7). When a task
+prompt asks for something the skeleton has no slot for — e.g. a clinical recommendation, an
+interpretation, an extended explanation — **the agent will often answer in the chat instead,
+where only the transcript captures it.** A faithful-looking Section 6 does not exempt an
+agent from unsupported claims it made in the transcript. Read both. If the skeleton is clean
+but the transcript contains out-of-domain claims, B4 is scored on the claims.
+
+**Two rules that remain firm:**
+
+1. **Layer A is graded from the *structured* output (`*_sierra.json`) vs. gold — never from
+   prose.** If prose and structured output disagree, that is a **B4** problem, not a Layer A
+   adjustment.
+2. **Record which artifact(s) drove each score** in the report's `Source` column, so a human
+   can trace any score back to its evidence. If a score was driven by the transcript rather
+   than the skeleton, say so explicitly.
 
 ## Reference files
 
@@ -137,6 +153,11 @@ Never convert this gate into a 0-5 score.
   before scoring any prose. Record borderline phrasing **verbatim** in the judge notes.
 - **B6** grades communication *of gold-supported findings*. A well-written out-of-domain
   clinical claim is penalized under B4 and **never rewarded** under B6.
+- **Grade the agent's complete response, not just the skeleton.** Check the transcript for
+  content the skeleton had no slot for — clinical recommendations, interpretations, answers to
+  parts of the task prompt the skeleton does not cover. These are part of what the agent
+  produced and are graded under B4 (faithfulness), B5 (completeness), B6 (communication), and
+  B8 (scope) exactly as if they had appeared in the skeleton.
 - Keep Layer A and Layer B separate. Never collapse them into one number.
 
 ## Reading gold JSON
@@ -189,15 +210,18 @@ not return `no`).
 | A5 Validation | | or NA |
 
 ## Layer B — Process / Behavioral
+*Source = which artifact(s) actually drove this score (skeleton / transcript / both / sierra.json).
+State the real basis, not the default — if the transcript drove it, say transcript.*
+
 | Criterion | Score (0-5) | Source | Notes |
 |-----------|-------------|--------|-------|
-| B2 Constraint adherence | | output | honored stated constraints? |
-| B3 Skeleton | | skeleton | |
-| B4 Faithfulness | | skeleton | entailed vs out-of-domain; quote borderline phrasing |
-| B5 Completeness | | skeleton | |
-| B6 Communication | | skeleton | |
-| B7 Provenance | | transcript+skeleton | |
-| B8 Scope discipline | | output+transcript | stayed in scope? |
+| B2 Constraint adherence | | | honored stated constraints? |
+| B3 Skeleton | | | |
+| B4 Faithfulness | | | entailed vs out-of-domain; quote borderline phrasing; note if claim was made outside the skeleton |
+| B5 Completeness | | | |
+| B6 Communication | | | |
+| B7 Provenance | | | |
+| B8 Scope discipline | | | stayed in scope? |
 
 ## Adherence taxonomy
 - Observed: <tag>
@@ -211,6 +235,7 @@ not return `no`).
 - Validity gate outcome + evidence
 - B2 constraint adherence and B8 scope findings (or N/A)
 - Any borderline B4 phrasing, quoted verbatim
+- Any substantive content the agent produced OUTSIDE the skeleton (in the transcript), and how it was scored
 
 ## Judge notes
 - Uncertainties, spot-check recommendations for the human grader
@@ -238,7 +263,8 @@ Never average Layer A and Layer B into a single grade.
 - [ ] Run artifacts read: structured json/csv, filled skeleton, transcript, run_meta
 - [ ] Validity gate checked FIRST; if `no`, run invalid — stopped
 - [ ] A1 precision/recall and A2 fabrication count reported
-- [ ] Each criterion graded from its mapped artifact, against rubric anchors
+- [ ] Agent's COMPLETE response read — skeleton AND transcript (content outside the skeleton is still graded)
+- [ ] Each criterion graded against rubric anchors; `Source` records which artifact actually drove it
 - [ ] Conditional criteria = NA (not 0)
 - [ ] Borderline B4 phrasing quoted verbatim in judge notes
 - [ ] Layers A and B reported separately
