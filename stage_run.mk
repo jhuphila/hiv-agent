@@ -66,7 +66,7 @@ _check:
 	@test -f "$(HIV_RUN)/eval/$(STEM)_report.md" || { echo "ERROR: no $(STEM)_report.md in $(HIV_RUN)/eval/"; exit 1; }
 	@test -f "$(HIV_AGENT)/eval/metrics_template.csv" || { echo "ERROR: no metrics_template.csv in $(HIV_AGENT)/eval/"; exit 1; }
 
-## judge-prompt: minimal prompt — the hiv-eval skill supplies all grading rules
+## judge-prompt
 judge-prompt:
 	@mkdir -p $(DEST)
 	@{ \
