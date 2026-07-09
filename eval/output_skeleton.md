@@ -55,5 +55,3 @@ _(write summary here)_
 ### Notes on how this report is graded (for transparency to the agent)
 - Scientific correctness is judged against an independent Sierra reference, not against formatting.
 - Getting the science right but the table layout slightly off is **not** penalized as a correctness failure.
-- Section 6 is checked for faithfulness to Sections 2-5 (no unsupported claims).
-- Section 7 is checked for honest disclosure of any workarounds.
