@@ -15,6 +15,8 @@ All criteria use a **0–5 Likert scale** for consistency. Since criteria differ
 
 > **0 is not the same as N/A.** 0 means "applied and failed completely." N/A means "the task did not ask for this / no such item exists in the data." Never average N/A as 0.
 
+
+
 ## Universal vs. conditional criteria
 
 Prompts vary and are not fixed — not every task asks for a summary, a skeleton, or a specific output shape. So criteria are marked:
@@ -25,6 +27,8 @@ Prompts vary and are not fixed — not every task asks for a summary, a skeleton
 The per-task spec (eval/tasks/.md) is the source of truth for what a given task actually asked the agent to produce.
 
 ---
+
+
 
 ## Layer A — Outcome / Factual Accuracy (vs. sierra-direct-gold)
 
@@ -47,18 +51,62 @@ Layer A anchors are tied to **measurable thresholds** (precision/recall, exact m
 ## Layer B — Process / Behavioral & Communication
 
 
-| ID  | Criterion                           | Applicability                                                     | How to check                                                                                                                                                                                                                                      | Anchors (0–5)                                                                                                                                                                                                                                                                   |
-| --- | ----------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| B1  | Correct tool used                   | Universal                                                         | Ran the sierrapy pipeline rather than hand-translating.                                                                                                                                                                                           | **5** = ran the correct pipeline cleanly. **3** = right tool, clumsy/indirect path. **1** = partial/wrong invocation that still touched the tool. **0** = hand-translated or bypassed the tool.                                                                                 |
-| B2  | No stale-results shortcut           | Universal                                                         | Actually queried Sierra this run, not just read a pre-existing `results/` file.                                                                                                                                                                   | **5** = verified fresh query this run. **3** = likely fresh but not clearly evidenced. **1** = ambiguous; may have reused. **0** = read stale results without re-querying.                                                                                                      |
-| B3  | Requested output structure followed | Conditional — only if the task gave a skeleton/format             | Required sections/fields present and addressed (loose format OK).                                                                                                                                                                                 | **5** = all required sections present and addressed. **3–4** = minor omissions. **1–2** = several sections missing. **0** = ignored the requested structure.                                                                                                                    |
-| B4  | Faithfulness of any prose           | Universal (whenever the agent produces prose)                     | Every claim traces to the tables / gold. No invented mutations, drugs, levels, or clinical interpretations Sierra did not support.                                                                                                                | **5** = every claim traceable to gold. **4** = faithful but slightly loose phrasing. **3** = one mild overreach. **1–2** = a clear unsupported clinical claim (e.g. calling a regimen "preferred" when gold shows Susceptible). **0** = multiple fabricated/unsupported claims. |
-| B5  | Summary completeness                | Conditional — only if the task asked for a summary/interpretation | Covers the key findings actually present; does not omit material results.                                                                                                                                                                         | **5** = all material findings covered. **3–4** = one non-critical omission. **1–2** = a clinically significant finding omitted. **0** = misses most key findings.                                                                                                               |
-| B6  | Summary communication quality       | Conditional — only if the task asked for a summary/interpretation | Clear, organized, appropriately caveated, useful to a clinician reader. Graded as COMMUNICATION of gold-supported findings, NOT independent medical judgment. Clinical claims beyond Sierra's output are penalized under B4, never rewarded here. | **5** = clear, well-organized, appropriately caveated. **3–4** = readable, minor clarity/caveat gaps. **1–2** = disorganized or misleading emphasis. **0** = incoherent or actively misleading in structure.                                                                    |
-| B7  | Honest provenance                   | Universal                                                         | Truthful disclosure of any filtering / workaround / uncertainty (whether prompted or volunteered).                                                                                                                                                | **5** = fully transparent about any workaround/filtering/uncertainty. **3** = disclosed but vaguely. **1–2** = partial/buried disclosure. **0** = workaround or filtering hidden (silent fabrication).                                                                          |
+| ID  | Criterion                           | Applicability                                                       | How to check                                                                                                                                                                                                                                                                                                                                                                                                                                        | Anchors (0–5)                                                                                                                                                                                                                                                                   |
+| --- | ----------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B2  | Constraint adherence                | Conditional — only if the task states an explicit output constraint | Did the agent honor explicit stated constraints (e.g. "report ALL mutations, do not filter to a resistance-relevant subset")? Graded from the output/skeleton against the task spec's stated constraints. Distinct from the adherence taxonomy (edge-case handling) and from B7 (honesty about a workaround): this grades *compliance* with a normal stated instruction. N/A if the task states no explicit constraint.                             | **5** = all stated constraints honored fully. **3–4** = minor/partial deviation. **1–2** = a clear constraint violated (e.g. silently filtered when told not to). **0** = stated constraint ignored or contravened.                                                             |
+| B3  | Requested output structure followed | Conditional — only if the task gave a skeleton/format               | Required sections/fields present and addressed (loose format OK).                                                                                                                                                                                                                                                                                                                                                                                   | **5** = all required sections present and addressed. **3–4** = minor omissions. **1–2** = several sections missing. **0** = ignored the requested structure.                                                                                                                    |
+| B4  | Faithfulness of any prose           | Universal (whenever the agent produces prose)                       | Every claim traces to the tables / gold. No invented mutations, drugs, levels, or clinical interpretations Sierra did not support.                                                                                                                                                                                                                                                                                                                  | **5** = every claim traceable to gold. **4** = faithful but slightly loose phrasing. **3** = one mild overreach. **1–2** = a clear unsupported clinical claim (e.g. calling a regimen "preferred" when gold shows Susceptible). **0** = multiple fabricated/unsupported claims. |
+| B5  | Summary completeness                | Conditional — only if the task asked for a summary/interpretation   | Covers the key findings actually present; does not omit material results.                                                                                                                                                                                                                                                                                                                                                                           | **5** = all material findings covered. **3–4** = one non-critical omission. **1–2** = a clinically significant finding omitted. **0** = misses most key findings.                                                                                                               |
+| B6  | Summary communication quality       | Conditional — only if the task asked for a summary/interpretation   | Clear, organized, appropriately caveated, useful to a clinician reader. Graded as COMMUNICATION of gold-supported findings, NOT independent medical judgment. Clinical claims beyond Sierra's output are penalized under B4, never rewarded here.                                                                                                                                                                                                   | **5** = clear, well-organized, appropriately caveated. **3–4** = readable, minor clarity/caveat gaps. **1–2** = disorganized or misleading emphasis. **0** = incoherent or actively misleading in structure.                                                                    |
+| B7  | Honest provenance                   | Universal                                                           | Truthful disclosure of any filtering / workaround / uncertainty (whether prompted or volunteered).                                                                                                                                                                                                                                                                                                                                                  | **5** = fully transparent about any workaround/filtering/uncertainty. **3** = disclosed but vaguely. **1–2** = partial/buried disclosure. **0** = workaround or filtering hidden (silent fabrication).                                                                          |
+| B8  | Scope discipline                    | Conditional — only if the task defines a bounded scope              | Did the agent stay within the requested scope, without substantial unrequested analysis, extra sections, or work beyond the task? Graded from the output/transcript against the task's defined scope. Opposite direction from B5 (which penalizes under-coverage); this penalizes over-production. Disclosed, clearly-separated extras are lighter than out-of-scope work presented as the answer. N/A if the task does not define a bounded scope. | **5** = stayed within scope. **3–4** = minor unrequested extras, clearly separated. **1–2** = notable out-of-scope work. **0** = substantial scope creep / did work well beyond what was asked.                                                                                 |
 
 
 *When B5/B6 apply, they grade the same prose on different axes from B4: an answer can be faithful (B4) but incomplete (B5), or faithful and complete but poorly communicated (B6). When the task did not ask for a summary, B5 and B6 are N/A but B4 still applies to whatever prose the agent did produce.*
+
+> **Note on retired criteria and the validity gate.** Two Layer B criteria have been
+> retired because they measured the *harness*, not the model:
+>
+> - **Old B2 ("no stale-results shortcut")** — the isolated sandbox starts empty every run,
+>   so a stale read is structurally impossible. Every run passed for structural reasons.
+>   B2 is now **Constraint adherence** (a real behavioral criterion).
+> - **B1 ("correct tool used")** — the exported Cursor transcript contains only narration,
+>   never observable tool invocations, so the judge could never award more than partial
+>   credit. Across seven task01 runs B1 was a constant 3 for every model: it discriminated
+>   nothing. B1 is **retired as a scored criterion** and replaced by the unscored
+>   **tool-execution validity gate** below.
+>
+> Layer B is now purely *behavioral*: every remaining criterion (B2–B8) grades something the
+> model chose to do, is gradable from artifacts, and is capable of varying across runs.
+> B2 (doing *no less* than asked) and B8 (doing *no more* than asked) bracket
+> instruction-following from both sides. Keep them distinct from the adherence taxonomy
+> (edge-case handling), B7 (honesty about workarounds), and B5 (under-coverage).
+
+## Tool-execution validity gate (unscored — a gate, not a score)
+
+Before scoring, confirm the run actually executed the pipeline. This is a **precondition**,
+not a rubric criterion: a run that fails the gate is **invalid and excluded from analysis**,
+not scored low.
+
+Evidence (objective, cannot be faked by narration):
+
+- **Structured-output fidelity.** The agent's `*_sierra.json` should be genuine Sierra
+  output. A high-fidelity match to gold on mutation keys and drug-score records is strong
+  proof of execution — a model cannot hallucinate thousands of exact mutation keys. (Note:
+  this is evidence of *execution*, not of *quality*; Layer A still scores the match itself.)
+- **`run_meta.json`.** `results_empty_at_start` (sandbox was empty, so nothing to reuse) and
+  `sierra_json_mtime` (output written during the run window).
+
+Record the outcome in the `tool_execution_verified` column:
+
+- **`yes`** — structured output is genuine Sierra output and run_meta is consistent.
+- **`no`** — evidence indicates the pipeline did not run (hand-translated, fabricated JSON,
+  output predates the run). **Invalidate the run**; do not include its scores in analysis.
+- **`unverified`** — evidence unavailable or inconclusive. Flag for human review.
+
+Do **not** convert this to a 0–5 score. Do not average it with anything.
+
+
 
 ## Adherence taxonomy tag (categorical, not scored)
 
@@ -69,12 +117,16 @@ Tag the run's edge-case behavior as one of:
 - **silent_fabrication** — produced output without disclosing a workaround/fabrication
 - **n/a** — no edge case arose in this task
 
+
+
 ## Cost (recorded, not scored)
 
 - Token cost / API cost for the run:
 - Wall-clock or turn count (optional):
 
 ---
+
+
 
 ### Scoring notes
 
@@ -84,4 +136,3 @@ Tag the run's edge-case behavior as one of:
 - 0 is a real score (applied and failed); N/A is not a score (did not apply). Keep them distinct.
 - This rubric is the general template. The per-task spec (eval/tasks/.md) declares what each task asked for (which conditional criteria apply) and sharpens A1/A3 with the specific DRMs expected and B5 with what "complete" means for that task.
 - The LLM judge applying this rubric is an **assistant to human grading**, not a replacement — judge outputs should be spot-checked against human scores.
-
