@@ -12,4 +12,8 @@ data/*
 
 # Evaluation run artifacts and task specs (local-only for now)
 eval/runs/
-eval/tasks/
+
+# CSV metrics files
+analysis/
+compile_metrics.py
+graph/*
