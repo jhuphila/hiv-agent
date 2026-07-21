@@ -23,7 +23,7 @@ Arm A of a two-part cost/context-management comparison. After the task01 analysi
 
 **Turn 2** (follow-up, sent in the same conversation after the turn-1 response):
 
-> Which of these sequences showed NNRTI resistance, and at what level?
+> List all 24 sequences with their NNRTI resistance status — including which are susceptible — and the resistance level for any that show reduced susceptibility.
 
 *(No task ID in either turn — the agent runs in the isolated sandbox and must not identify or read this spec.)*
 
@@ -33,12 +33,12 @@ The question is fully answerable by referencing turn 1's own findings — no new
 
 ## Applicable rubric criteria
 
-Grade **turn 2's response**, using `results/gold/cohort_clean.json` as ground truth for which sequences carry NNRTI resistance and at what level (a filtered subset of the same gold file task01 uses).
+Grade **turn 2's response**, using `results/gold/cohort_clean.json` as ground truth for all 24 sequences' NNRTI status (susceptible or resistant) and resistance level where applicable.
 
-- **Layer A:** A1/A3 apply to turn 2's specific claims (NNRTI mutations and resistance levels for the correct subset of sequences) — treat this as a targeted, smaller-scope check against the same gold file, not a fresh gold generation. **A6 (attribution)** applies — confirm each NNRTI call is attached to the correct sequence_id, especially since turn 2 is a filtered subset of a 24-sequence batch.
+- **Layer A:** A1/A3 apply to turn 2's specific claims across **all 24 sequences**, not just the resistant ones — treat this as a targeted, full-enumeration check against the same gold file, not a fresh gold generation. **A6 (attribution)** applies — confirm each NNRTI call is attached to the correct sequence_id across the full batch.
 - **Layer B:**
-  - **B4 (fabrication)** — applies; any NNRTI resistance call not in gold, or omitted when gold shows it, is scored here (omission also affects B5 below).
-  - **B5 (completeness)** — applies; every sequence gold shows with NNRTI resistance must appear in the turn-2 answer — silent dropping is the main risk to watch for in a long-context follow-up.
+  - **B4 (fabrication)** — applies; any NNRTI resistance call not in gold, or a susceptible sequence claimed as resistant (or vice versa), is scored here.
+  - **B5 (completeness)** — applies; **all 24 sequences must appear**, including the susceptible ones — silently collapsing susceptible sequences into a vague aggregate ("most are susceptible") without naming them is a completeness failure, not just a style choice.
   - **B2** — N/A for turn 2 (no explicit unfiltered/format constraint is restated; turn 1's constraint doesn't automatically bind a different question).
   - **B7** — N/A unless the agent surfaces new uncertainty in turn 2 that wasn't in turn 1.
   - `clinical_extension_flag` — set it if turn 2 introduces any clinical framing beyond a factual resistance lookup (not expected for this question, but worth checking).

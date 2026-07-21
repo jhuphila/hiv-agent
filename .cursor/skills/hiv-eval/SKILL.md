@@ -152,9 +152,9 @@ Confirm the run actually executed the pipeline. This is a **precondition**, not 
 - **`run_meta.json`** — `results_empty_at_start` (nothing to reuse) and `sierra_json_mtime`
   (written during the run window).
 
-Report `tool_execution_verified` as **`yes`** / **`no`** / **`unverified`**.
+Report `tool_execution_verified` as **`yes`** / **`no`** / **`NA`**/ **`unverified`**.
 If **`no`**: the run is **invalid** — say so, emit no scores and no CSV row, and stop.
-Never convert this gate into a 0-5 score.
+Never convert this gate into a 0-5 score. The score can ONLY be applied as **`NA`** if the task did not require tool execution, such as our multi-turn tasks like task01c, where the agent is intentionally provided with context from a prior conversation.
 
 ### Step 4 — Scoring notes specific to running a grading
 

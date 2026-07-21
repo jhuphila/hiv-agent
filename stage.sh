@@ -25,6 +25,18 @@ ask() {   # ask VAR "Question" "default"
 
 echo "=== stage a completed agent run ==="
 
+# ---- which sandbox? --------------------------------------------------------
+# 1 = hiv-run (default), 2 = hiv-run-2 — lets you run two models in parallel
+# from two Cursor windows without their staging colliding.
+read -rp "Which sandbox? [1=hiv-run (default), 2=hiv-run-2]: " SANDBOX_CHOICE
+case "${SANDBOX_CHOICE:-1}" in
+  2) HIV_RUN_DIR="$HOME/star-research/hiv-run-2" ;;
+  1|"") HIV_RUN_DIR="$HOME/star-research/hiv-run" ;;
+  *) echo "Unrecognized choice '$SANDBOX_CHOICE' — expected 1 or 2."; exit 1 ;;
+esac
+echo "Using sandbox: $HIV_RUN_DIR"
+echo ""
+
 ask TASK  "What task number? (e.g. 02)"
 ask MODEL "Which model? (e.g. fable-5, opus-4.8, gpt-5.5)"
 ask RUN   "Which run number?" "1"
@@ -38,10 +50,11 @@ ask TRANSCRIPT_FILE "Transcript filename? (just the .md name)"
 TRANSCRIPT="$TRANSCRIPT_DIR/$TRANSCRIPT_FILE"
 
 # results_empty_at_start: this is the B-integrity evidence. Ask explicitly.
-ask EMPTY "Was hiv-run/results/ empty before this run? (true/false)" "true"
+ask EMPTY "Was $HIV_RUN_DIR/results/ empty before this run? (true/false)" "true"
 
 echo ""
 echo "About to stage:"
+echo "  SANDBOX=$HIV_RUN_DIR"
 echo "  TASK=$TASK  MODEL=$MODEL  RUN=$RUN  ROUND=$ROUND"
 echo "  FASTA=$FASTA"
 echo "  TRANSCRIPT=$TRANSCRIPT"
@@ -50,5 +63,6 @@ read -rp "Proceed? [y/N]: " ok
 [[ "$ok" == "y" || "$ok" == "Y" ]] || { echo "aborted."; exit 1; }
 
 RESULTS_EMPTY="$EMPTY" make -f "$MK" stage_run \
+  HIV_RUN="$HIV_RUN_DIR" \
   TASK="$TASK" MODEL="$MODEL" RUN="$RUN" ROUND="$ROUND" \
   FASTA="$FASTA" TRANSCRIPT="$TRANSCRIPT"
