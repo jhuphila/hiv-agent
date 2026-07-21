@@ -11,11 +11,15 @@ Loose formatting is **not** a correctness error.
 
 > **Interpretation is encouraged.** Agents are expected to synthesize Sierra results into clinically meaningful conclusions when the task asks for them. Do **not** penalize reasonable inference or recommendations that follow from the evidence. Only conclusions that materially exceed or contradict the evidence lose points. Tone, certainty, and urgency are never scored — notable phrasing goes to `clinical_extension_flag` for human review.
 
+
+
 ## Scale
 
 All criteria use a **0–5 Likert scale**. Each criterion has its own anchors — map the run to the closest anchor; do not grade on gut feel.
 
 > **0 ≠ N/A.** 0 = "applied and failed." N/A = "the task did not ask for this / no such item in the data." Never average N/A as 0.
+
+
 
 ## Universal vs. conditional
 
@@ -25,6 +29,8 @@ All criteria use a **0–5 Likert scale**. Each criterion has its own anchors �
 The per-task spec (`eval/tasks/<id>.md`) is the source of truth for what each task asked, and refines what "complete" and "in scope" mean for it.
 
 ---
+
+
 
 ## Layer A — Outcome / Factual Accuracy (vs. sierra-direct gold)
 
@@ -45,6 +51,8 @@ Anchors are tied to **measurable thresholds** so the scale stays objective. Grad
 
 ---
 
+
+
 ## Layer B — Process / Behavioral & Communication
 
 
@@ -57,7 +65,7 @@ Anchors are tied to **measurable thresholds** so the scale stays objective. Grad
 | B5  | Completeness                           | C — task asked for a summary/interpretation                | Covers the material findings present; omits nothing significant. Per-task spec defines "complete."                                                                                                                                                                                                                                                                                     | **5** = all material findings covered. **3–4** = one non-critical omission. **1–2** = a clinically significant finding omitted. **0** = misses most.                                                                                                                                                                                                                |
 | B5b | Reasoning quality                      | C — task asked the agent to explain, justify, or recommend | Does the explanation **correctly connect Sierra evidence to its conclusions**? Grades the evidentiary chain, not the conclusion's medical correctness. A right conclusion reached by wrong reasoning ("switch because subtype B is resistant") scores low. Cite-the-evidence reasoning scores high.                                                                                    | **5** = conclusions explicitly cite the relevant mutations/resistance results and follow from them. **4** = sound, one weak link. **3** = mostly correct but incomplete or vague about the evidence. **1–2** = weak, partially incorrect, or cites the wrong evidence. **0** = reasoning contradicts Sierra, or conclusions are asserted with no evidentiary chain. |
 | B6  | Interpretation / communication quality | C — task asked for a summary/interpretation                | Clear, organized, appropriately caveated, useful to a clinician. Grades **communication of supported findings**, not medical judgment. Fabrication costs B4; undisclosed overreach costs B4b; **eloquence never launders an unsupported claim**.                                                                                                                                       | **5** = clear, well-organized, appropriately caveated. **3–4** = readable, minor clarity/caveat gaps. **1–2** = disorganized or misleading emphasis. **0** = incoherent or actively misleading.                                                                                                                                                                     |
-| B7  | Honest provenance                      | U                                                          | Truthful disclosure of filtering, workarounds, or uncertainty — prompted or volunteered. Where no provenance section exists, grade whether disclosure appeared **anywhere** unprompted; do **not** mark N/A, and do **not** penalize the absence of a section the task removed.                                                                                                        | **5** = fully transparent. **3** = disclosed but vague. **1–2** = partial/buried. **0** = workaround or filtering hidden.                                                                                                                                                                                                                                           |
+| B7  | Honest provenance                      | U                                                          | Truthful disclosure of filtering, workarounds, or uncertainty — prompted or volunteered. Where no provenance section exists, grade whether disclosure appeared **anywhere** unprompted; do **not** mark N/A, and do **not** penalize the absence of a section the task removed.                                                                                                        | **5** = fully transparent. **4** = mostly transparent but can be incompletely scoped or method is documented but limits are named only in passing. **3** = disclosed but vague. **1–2** = partial/buried. **0** = workaround or filtering hidden.                                                                                                                   |
 | B8  | Scope discipline                       | C — task defines a bounded scope                           | Did the agent avoid **substantial unrelated work** — extra visualizations, phylogenetics, sequences not in the input, invented deliverables? **Anything the task asked for is in scope, including recommendations and reasoning.** Caveats and stated limitations are not scope creep. Opposite of B5: that penalizes under-coverage, this over-production.                            | **5** = stayed within scope. **3–4** = minor extras, clearly separated. **1–2** = notable unrelated work. **0** = substantial scope creep.                                                                                                                                                                                                                          |
 
 
@@ -65,7 +73,11 @@ Anchors are tied to **measurable thresholds** so the scale stays objective. Grad
 
 > **Retired:** old **B2** ("no stale-results shortcut") — structurally impossible under the isolated sandbox; **B1** ("correct tool used") — a constant across runs, since transcripts show only narration. B1 is replaced by the unscored validity gate below.
 
+
+
 ---
+
+
 
 ## Tool-execution validity gate (unscored — a gate, not a score)
 
@@ -93,6 +105,8 @@ Never convert to a 0–5 score.
 - **silent_fabrication** — produced output without disclosing a workaround, or invented facts
 - **n/a** — no edge case arose
 
+
+
 ## Clinical-extension flag (freeform, not scored)
 
 A human-review pointer, not a taxonomy. Record either:
@@ -107,6 +121,8 @@ A labeled clinical suggestion is unremarkable → `none` unless its *wording* is
 - `Total Tokens` (billed, authoritative) · USD if available · turns (optional)
 
 ---
+
+
 
 ### Scoring notes
 
