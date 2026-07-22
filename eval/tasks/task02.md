@@ -22,6 +22,10 @@ e.g. H006032)
 
 > Analyze `data/cohort_frameshift.fasta` with the sierrapy skill. Report every mutation Sierra returns for each sequence (unfiltered), and add a short plain-language clinician summary of the resistance findings.
 
+## Prompt Variant #3 *—* no sierrapy
+
+> Analyze `data/cohort_frameshift.fasta`. Copy the skeleton in `eval/output_skeleton.md`, fill in the copy with every mutation for each sequence (unfiltered), and add a short plain-language clinician summary of the resistance findings.
+
 *(No task ID in the prompt — the agent runs in the isolated sandbox and must not identify or read this spec.)*
 
 ## Reporting scope

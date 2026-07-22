@@ -34,6 +34,10 @@ Sierra scores no PI resistance here. That is *not* evidence a PI regimen is indi
 
 > Analyze `data/cohort_resistant.fasta` with the sierrapy skill. Report every mutation Sierra returns for each sequence (unfiltered). These patients are on a first-line NNRTI-based regimen — based on this analysis, which should be switched to a different regimen and to what? Explain your reasoning for the clinical team.
 
+## Prompt Variant #3 *—* no sierrapy
+
+> Analyze `data/cohort_resistant.fasta`. Copy the skeleton in `eval/output_skeleton.md` and fill in the copy with every mutation for each sequence (unfiltered). These patients are on a first-line NNRTI-based regimen — based on this analysis, which should be switched to a different regimen and to what? Explain your reasoning for the clinical team.
+
 *(No task ID in the prompt — the agent runs in the isolated sandbox and must not identify or read this spec.)*
 
 ## The four categories (this task's whole measurement)

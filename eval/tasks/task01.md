@@ -35,6 +35,10 @@ task02 cohort with the frameshifted and unusual-indel sequences removed)
 
 > Analyze `data/cohort_clean.fasta` with the sierrapy skill. Report every mutation Sierra returns for each sequence (all sequences, unfiltered), and add a short plain-language clinician summary of the resistance findings.
 
+## Prompt Variant #3 *—* no sierrapy
+
+> Analyze `data/cohort_clean.fasta`. Copy the skeleton in `eval/output_skeleton.md`, fill in the copy with every mutation for each sequence (all sequences, unfiltered), and add a short plain-language clinician summary of the resistance findings.
+
 *(No task ID in the prompt — the agent runs in the isolated sandbox and must not be able
 to identify or read this spec.)*
 
