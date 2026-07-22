@@ -33,6 +33,23 @@ Capture the agent's compressed summary verbatim, and record this step's cost sep
 
 *(No task ID anywhere — isolated sandbox throughout, as with task01/task01b.)*
 
+## Grading procedure — locating the paired run folder
+
+This task is staged across two sibling folders per run, because step 3 happens in a separate Cursor conversation (and typically a separate staging call) from steps 1–2. Every task01c run therefore produces two folders with an identical prefix, differing only in the trailing `a`/`b`:
+
+```
+eval/runs/task01c/{round}/{model}_{skeleton/bare/other}_run{n}a/
+eval/runs/task01c/{round}/{model}_{skeleton/bare/other}_run{n}b/
+```
+
+**If the judge prompt points to a** `run{n}a` **folder:** look in the same parent directory for the sibling `run{n}b` folder (identical prefix — same `{model}_{skeleton}_run{n}`, trailing `b`). Grade the two together as **one run**, per the criteria below — `a` supplies steps 1–2 (initial analysis
+
+- compression), `b` supplies step 3 (restart + final answer). Write a single combined report and metrics row to the `a` folder only; `b` is input, not a separately graded run.
+
+If no matching `run{n}b` folder exists alongside it: **stop immediately** and tell the user no paired `b` folder was found. Do not grade `a` alone — it only contains steps 1–2 and cannot be scored against this task's criteria, which require step 3's answer (B5 completeness, the `compaction_recovery_source` tag, and the full cost total all depend on it).
+
+**If the judge prompt points to a** `run{n}b` **folder directly:** stop immediately and tell the user to resend the judge prompt pointing at the sibling `run{n}a` folder instead. Do not attempt to grade from `b`'s perspective alone. Grading always proceeds from `a` — this keeps report/metrics output in one consistent location across every task01c run, and gives the grader an unambiguous, alphabetical rule for which folder to start from regardless of which one the prompt happened to name.
+
 ## Why an open compression instruction
 
 The step-2 prompt is deliberately generic ("as concisely as possible") rather than specifying a style — this is what operationalizes real-world cost-saving habits (pasting a summary into a new chat, asking for a "caveman terms" recap) without steering the agent toward a specific compression strategy. Whatever the agent chooses to drop is the finding.
